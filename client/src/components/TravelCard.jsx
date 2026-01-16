@@ -96,7 +96,7 @@ export default function TravelCard({
             : travel.description}
         </p>
         {/* Read more button */}
-        <ReadMore url={travel.url} className="inline-flex items-center gap-2 text-blue-400 hover:text-blue-700 font-medium text-sm transition-all duration-300 self-start group/link hover:gap-3" />
+        <ReadMore url={travel.url} className="inline-flex items-center gap-1 text-blue-400 hover:text-blue-700 font-medium text-sm transition-all duration-300 self-start group/link hover:gap-2" />
 
         {/* Tags */}
         <div className="flex flex-wrap items-center gap-2 mt-2">
