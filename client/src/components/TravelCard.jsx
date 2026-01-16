@@ -1,11 +1,19 @@
-import { useState } from 'react';
-import { copyUrl } from '../lib/utils';
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
+import { copyUrl } from "../lib/utils";
+import MainPhoto from "./MainPhoto";
+import ThumbnailPhoto from "./ThumbnailPhoto";
+import LightBox from "./LightBox";
+import CopyUrlIcon from "./CopyUrlIcon";
+import SuccesIcon from "./SuccesIcon";
 
-export default function TravelCard({ travel }) {
+export default function TravelCard({ travel, setSearchQuery }) {
   const displayPhotos = travel.photos.slice(0, 4);
   const mainPhoto = displayPhotos[0];
   const thumbnails = displayPhotos.slice(1);
   const [copied, setCopied] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   const handleCopyUrl = async () => {
     const success = await copyUrl(travel.url);
@@ -15,57 +23,157 @@ export default function TravelCard({ travel }) {
     }
   };
 
+  const openLightbox = (e, imageUrl, index) => {
+    e.stopPropagation(); // ป้องกัน event bubbling
+    setSelectedImage(imageUrl);
+    setCurrentImageIndex(index);
+  };
+
+  const closeLightbox = () => {
+    setSelectedImage(null);
+  };
+
+  const navigateImage = (direction) => {
+    const newIndex =
+      direction === "next"
+        ? (currentImageIndex + 1) % displayPhotos.length
+        : (currentImageIndex - 1 + displayPhotos.length) % displayPhotos.length;
+    setCurrentImageIndex(newIndex);
+    setSelectedImage(displayPhotos[newIndex]);
+  };
+
+  // Handle keyboard navigation
+  useEffect(() => {
+    const handleKey = (e) => {
+      if (e.key === "Escape") closeLightbox();
+      if (e.key === "ArrowRight") navigateImage("next");
+      if (e.key === "ArrowLeft") navigateImage("prev");
+    };
+    if (selectedImage) {
+      window.addEventListener("keydown", handleKey);
+      document.body.style.overflow = "hidden"; // ล็อค scroll เมื่อเปิด modal
+    }
+    return () => {
+      window.removeEventListener("keydown", handleKey);
+      document.body.style.overflow = "unset"; // ปลดล็อคเมื่อปิด modal
+    };
+  }, [selectedImage]);
+
   return (
-    <div className="travel-card">
-      <div className="card-image-container">
-        <img src={mainPhoto} alt={travel.title} className="main-image" />
+    <div className="group grid grid-cols-[300px_1fr_auto] gap-6 bg-white rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-500 relative animate-[fadeInUp_0.6s_ease-out] hover:-translate-y-1 max-lg:grid-cols-1 border border-gray-100 overflow-hidden font-thai">
+      {/* Gradient overlay animation */}
+      <div className="absolute inset-0 bg-gradient-to-r from-blue-50/0 via-blue-50/50 to-blue-50/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+
+      {/* Main photo */}
+      <div
+        onClick={(e) => openLightbox(e, mainPhoto, 0)}
+        className="relative w-full h-64 rounded-xl overflow-hidden max-lg:h-52 shadow-md group-hover:shadow-xl transition-shadow duration-300 cursor-zoom-in"
+      >
+        <MainPhoto mainPhoto={mainPhoto} travel={travel} />
       </div>
 
-      <div className="card-content">
-        <h2 className="card-title">{travel.title}</h2>
-        <p className="card-description">
+      {/* Travel information */}
+      <div className="relative flex flex-col gap-3 z-10">
+        {/* Title */}
+        <h2 className="text-2xl font-medium text-gray-800 leading-tigh transition-colors duration-300 max-sm:text-xl">
+          {travel.title}
+        </h2>
+        {/* Description */}
+        <p className="text-gray-600 leading-relaxed text-base line-clamp-3">
           {travel.description.length > 100
             ? `${travel.description.substring(0, 100)}...`
             : travel.description}
         </p>
-        <a href={travel.url} className="read-more" target="_blank" rel="noopener noreferrer">
-          อ่านต่อ
+        {/* Read more button */}
+        <a
+          href={travel.url}
+          className="inline-flex items-center gap-2 text-blue-400 hover:text-blue-700 font-medium text-sm transition-all duration-300 self-start group/link hover:gap-3"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <span>อ่านต่อ</span>
+          <svg
+            className="w-4 h-4 transform group-hover/link:translate-x-1 transition-transform duration-300"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M9 5l7 7-7 7"
+            />
+          </svg>
         </a>
 
-        <div className="card-tags">
-          <span className="tags-label">หมวด</span>
+        {/* Tags */}
+        <div className="flex flex-wrap items-center gap-2 mt-2">
+          <span className="text-gray-500 text-sm font-medium">หมวด</span>
           {travel.tags.map((tag, index) => (
-            <span key={index}>
-              <a href="#" className="tag-link">
+            <span key={index} className="inline-flex items-center">
+              <button
+                onClick={() => setSearchQuery(tag)}
+                className="px-3 py-1 text-sm bg-blue-50 text-blue-400 rounded-full hover:bg-blue-100 transition-colors duration-300 font-sm"
+              >
                 {tag}
-              </a>
-              {index < travel.tags.length - 1 && <span className="tag-separator"> และ </span>}
+              </button>
+              {index < travel.tags.length - 1 && (
+                <span className="text-gray-400 mx-1">·</span>
+              )}
             </span>
           ))}
         </div>
 
-        <div className="card-thumbnails">
+        {/* Thumbnails */}
+        <div className="flex gap-3 mt-4 flex-wrap">
           {thumbnails.map((photo, index) => (
-            <img key={index} src={photo} alt={`${travel.title} ${index + 2}`} className="thumbnail" />
+            <div
+              key={index}
+              onClick={(e) => openLightbox(e, photo, index + 1)}
+              className="relative w-20 h-20 rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 hover:scale-110 cursor-zoom-in group/thumb max-sm:w-16 max-sm:h-16"
+            >
+              <ThumbnailPhoto photo={photo} travel={travel} index={index} />
+            </div>
           ))}
         </div>
       </div>
 
-      <div className="card-link-icon">
-        <button 
+      {/* Copy URL button */}
+      <div className="relative flex items-center justify-center max-lg:absolute max-lg:top-6 max-lg:right-6 z-10">
+        <button
           onClick={handleCopyUrl}
           type="button"
           title={copied ? "คัดลอกแล้ว!" : "คัดลอก URL"}
           disabled={copied}
-          className="copy-button"
+          className={`
+            relative p-3 rounded-full border-2 transition-all duration-300 max-sm:p-1 max-sm:m-2 max-lg:p-2 max-lg:m-2
+            ${
+              copied
+                ? "bg-green-500 border-green-500 scale-110"
+                : "bg-white border-blue-400 hover:bg-blue-50 hover:scale-110 hover:rotate-12"
+            }
+            disabled:cursor-not-allowed shadow-lg hover:shadow-xl
+            group/button
+          `}
         >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <g transform="translate(2.5, 2.5)">
-              <path d="M4.53867 7.28254L2.30521 9.516C1.47108 10.3501 0.991397 11.4851 1.00016 12.6779C1.00893 13.8707 1.47811 15.0126 2.35183 15.8593C3.19851 16.7331 4.34064 17.2022 5.53326 17.211C6.75309 17.22 7.86119 16.7673 8.69537 15.9332L10.9288 13.6997M13.7816 10.9015L16.0151 8.66801C16.8492 7.83387 17.3289 6.69891 17.3201 5.5061C17.3114 4.31328 16.8422 3.1714 15.9685 2.32466C15.122 1.47818 13.9801 1.00897 12.7872 1.0002C11.5944 0.991437 10.4593 1.44389 9.62514 2.27805L7.39168 4.5115M5.77326 12.4192L12.4736 5.71881" stroke="#4A90E2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </g>
-          </svg>
+          {copied ? <SuccesIcon /> : <CopyUrlIcon />}
         </button>
       </div>
+
+      {/* Lightbox Modal */}
+      {selectedImage &&
+        createPortal(
+          <LightBox
+            selectedImage={selectedImage}
+            travel={travel}
+            currentImageIndex={currentImageIndex}
+            displayPhotos={displayPhotos}
+            closeLightbox={closeLightbox}
+            navigateImage={navigateImage}
+          />,
+          document.body
+        )}
     </div>
   );
 }
