@@ -114,7 +114,7 @@ export default function TravelCard({ travel, setSearchQuery }) {
             <span key={index} className="inline-flex items-center">
               <button
                 onClick={() => setSearchQuery(tag)}
-                className="px-3 py-1 text-sm bg-blue-50 text-blue-400 rounded-full hover:bg-blue-100 transition-colors duration-300 font-sm"
+                className="px-3 py-1 text-sm bg-blue-50 text-blue-400 rounded-full hover:bg-blue-100 hover:text-blue-600 cursor-pointer transition-colors duration-300 font-sm"
               >
                 {tag}
               </button>
@@ -147,7 +147,7 @@ export default function TravelCard({ travel, setSearchQuery }) {
           title={copied ? "คัดลอกแล้ว!" : "คัดลอก URL"}
           disabled={copied}
           className={`
-            relative p-3 rounded-full border-2 transition-all duration-300 max-sm:p-1 max-sm:m-2 max-lg:p-2 max-lg:m-2
+            relative p-3 rounded-full border-2 transition-all duration-300 max-sm:p-1 max-sm:m-2 max-lg:p-2 max-lg:m-2 cursor-pointer
             ${
               copied
                 ? "bg-green-500 border-green-500 scale-110"
