@@ -6,15 +6,22 @@ import ThumbnailPhoto from "./ThumbnailPhoto";
 import LightBox from "./LightBox";
 import CopyUrlIcon from "./CopyUrlIcon";
 import SuccesIcon from "./SuccesIcon";
+import ReadMore from "./ReadMore";
 
-export default function TravelCard({ travel, setSearchQuery }) {
+export default function TravelCard({
+  travel,
+  selectedTags,
+  addTag,
+  removeTag,
+}) {
   const displayPhotos = travel.photos.slice(0, 4);
   const mainPhoto = displayPhotos[0];
   const thumbnails = displayPhotos.slice(1);
-  const [copied, setCopied] = useState(false);
-  const [selectedImage, setSelectedImage] = useState(null);
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [copied, setCopied] = useState(false); // สถานะของการคัดลอก URL
+  const [selectedImage, setSelectedImage] = useState(null); // รูปภาพที่เลือก
+  const [currentImageIndex, setCurrentImageIndex] = useState(0); // index ของรูปภาพที่เลือก
 
+  // Handle copying the URL
   const handleCopyUrl = async () => {
     const success = await copyUrl(travel.url);
     if (success) {
@@ -23,16 +30,19 @@ export default function TravelCard({ travel, setSearchQuery }) {
     }
   };
 
+  // Handle opening the lightbox
   const openLightbox = (e, imageUrl, index) => {
     e.stopPropagation(); // ป้องกัน event bubbling
     setSelectedImage(imageUrl);
     setCurrentImageIndex(index);
   };
 
+  // Handle closing the lightbox
   const closeLightbox = () => {
     setSelectedImage(null);
   };
 
+  // Handle navigating the image
   const navigateImage = (direction) => {
     const newIndex =
       direction === "next"
@@ -42,7 +52,7 @@ export default function TravelCard({ travel, setSearchQuery }) {
     setSelectedImage(displayPhotos[newIndex]);
   };
 
-  // Handle keyboard navigation
+  // Handle keyboard navigation in the lightbox
   useEffect(() => {
     const handleKey = (e) => {
       if (e.key === "Escape") closeLightbox();
@@ -59,6 +69,7 @@ export default function TravelCard({ travel, setSearchQuery }) {
     };
   }, [selectedImage]);
 
+  // Render the TravelCard component
   return (
     <div className="group grid grid-cols-[300px_1fr_auto] gap-6 bg-white rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-500 relative animate-[fadeInUp_0.6s_ease-out] hover:-translate-y-1 max-lg:grid-cols-1 border border-gray-100 overflow-hidden font-thai">
       {/* Gradient overlay animation */}
@@ -85,44 +96,32 @@ export default function TravelCard({ travel, setSearchQuery }) {
             : travel.description}
         </p>
         {/* Read more button */}
-        <a
-          href={travel.url}
-          className="inline-flex items-center gap-2 text-blue-400 hover:text-blue-700 font-medium text-sm transition-all duration-300 self-start group/link hover:gap-3"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <span>อ่านต่อ</span>
-          <svg
-            className="w-4 h-4 transform group-hover/link:translate-x-1 transition-transform duration-300"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M9 5l7 7-7 7"
-            />
-          </svg>
-        </a>
+        <ReadMore url={travel.url} className="inline-flex items-center gap-2 text-blue-400 hover:text-blue-700 font-medium text-sm transition-all duration-300 self-start group/link hover:gap-3" />
 
         {/* Tags */}
         <div className="flex flex-wrap items-center gap-2 mt-2">
           <span className="text-gray-500 text-sm font-medium">หมวด</span>
-          {travel.tags.map((tag, index) => (
-            <span key={index} className="inline-flex items-center">
-              <button
-                onClick={() => setSearchQuery(tag)}
-                className="px-3 py-1 text-sm bg-blue-50 text-blue-400 rounded-full hover:bg-blue-100 hover:text-blue-600 cursor-pointer transition-colors duration-300 font-sm"
-              >
-                {tag}
-              </button>
-              {index < travel.tags.length - 1 && (
-                <span className="text-gray-400 mx-1">·</span>
-              )}
-            </span>
-          ))}
+          {travel.tags.map((tag, index) => {
+            const isSelected = selectedTags.includes(tag);
+            return (
+              <span key={index} className="inline-flex items-center">
+                <button
+                  onClick={() => (isSelected ? removeTag(tag) : addTag(tag))}
+                  className={`px-3 py-1 text-sm rounded-full cursor-pointer transition-all duration-300 ${
+                    isSelected
+                      ? "bg-blue-500 text-white hover:bg-blue-600"
+                      : "bg-blue-50 text-blue-400 hover:bg-blue-100 hover:text-blue-600"
+                  }`}
+                >
+                  {isSelected && <span className="inline-block mr-1">✓</span>}
+                  {tag}
+                </button>
+                {index < travel.tags.length - 1 && (
+                  <span className="text-gray-400 mx-1">·</span>
+                )}
+              </span>
+            );
+          })}
         </div>
 
         {/* Thumbnails */}

@@ -1,3 +1,5 @@
+import ReadMore from "./ReadMore";
+
 export default function LightBox({
   selectedImage,
   travel,
@@ -97,11 +99,7 @@ export default function LightBox({
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-6 rounded-b-lg">
           <h3 className="text-white text-xl font-bold mb-2">
             {travel.title}{" "}
-            <span className="text-blue-400 text-xl underline">
-              <a href={travel.url} target="_blank" rel="noopener noreferrer">
-                อ่านต่อ
-              </a>
-            </span>
+              <ReadMore url={travel.url} className="inline-flex items-center text-blue-500 hover:text-blue-700 font-medium text-2xl underline transition-all duration-300 self-start group/link hover:gap-1" />
           </h3>
           <p className="text-white/80 text-sm">คลิกนอกรูปหรือกด ESC เพื่อปิด</p>
         </div>
